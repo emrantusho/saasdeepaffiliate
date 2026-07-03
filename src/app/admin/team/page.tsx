@@ -42,6 +42,9 @@ const ROLES = [
   { value: 'VIEWER', label: 'Viewer', description: 'View-only access' },
 ];
 
+const CURRENCY_MAP: Record<string, string> = { BDT: '৳', INR: '₹', USD: '$', EUR: '€', GBP: '£' };
+const LOCALE_MAP: Record<string, string> = { BDT: 'en-BD', INR: 'en-IN', USD: 'en-US', EUR: 'en-DE', GBP: 'en-GB' };
+
 export default function TeamPage() {
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
@@ -49,7 +52,27 @@ export default function TeamPage() {
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ email: '', name: '', role: 'MANAGER' });
 
-  useEffect(() => { fetchMembers(); }, []);
+  const [locale, setLocale] = useState('en-IN');
+  const [currencySymbol, setCurrencySymbol] = useState('৳');
+
+  const fetchSettings = async () => {
+    try {
+      const res = await fetch('/api/admin/settings');
+      const json = await res.json();
+      if (json.success) {
+        const currency = json.settings.currency;
+        setCurrencySymbol(CURRENCY_MAP[currency] || '৳');
+        setLocale(LOCALE_MAP[currency] || 'en-IN');
+      }
+    } catch (error) {
+      console.error('Failed to fetch settings:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchSettings();
+    fetchMembers();
+  }, []);
 
   const fetchMembers = async () => {
     try {
@@ -216,7 +239,7 @@ export default function TeamPage() {
                     <TableCell>{getRoleBadge(member.role)}</TableCell>
                     <TableCell>{getStatusBadge(member.status)}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {new Date(member.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      {new Date(member.createdAt).toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' })}
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">

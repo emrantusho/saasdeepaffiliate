@@ -86,6 +86,9 @@ const typeColors: Record<string, 'default' | 'secondary' | 'outline' | 'destruct
   NOTIFICATION: 'secondary',
 };
 
+const CURRENCY_MAP: Record<string, string> = { BDT: '৳', INR: '₹', USD: '$', EUR: '€', GBP: '£' };
+const LOCALE_MAP: Record<string, string> = { BDT: 'en-BD', INR: 'en-IN', USD: 'en-US', EUR: 'en-DE', GBP: 'en-GB' };
+
 export default function EmailsPage() {
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
   const [loading, setLoading] = useState(true);
@@ -101,7 +104,25 @@ export default function EmailsPage() {
   const [showSourceView, setShowSourceView] = useState(false);
   const [form, setForm] = useState({ type: '', name: '', subject: '', body: '', variables: '' });
 
+  const [locale, setLocale] = useState('en-IN');
+  const [currencySymbol, setCurrencySymbol] = useState('৳');
+
+  const fetchSettings = async () => {
+    try {
+      const res = await fetch('/api/admin/settings');
+      const json = await res.json();
+      if (json.success) {
+        const currency = json.settings.currency;
+        setCurrencySymbol(CURRENCY_MAP[currency] || '৳');
+        setLocale(LOCALE_MAP[currency] || 'en-IN');
+      }
+    } catch (error) {
+      console.error('Failed to fetch settings:', error);
+    }
+  };
+
   useEffect(() => {
+    fetchSettings();
     fetchTemplates();
   }, []);
 
@@ -443,7 +464,7 @@ export default function EmailsPage() {
                     <TableCell className="text-sm">{t.sentCount}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {t.lastSent
-                        ? new Date(t.lastSent).toLocaleDateString('en-IN', {
+                        ? new Date(t.lastSent).toLocaleDateString(locale, {
                             day: 'numeric',
                             month: 'short',
                           })

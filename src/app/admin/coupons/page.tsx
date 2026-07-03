@@ -38,6 +38,9 @@ interface Coupon {
   createdAt: string;
 }
 
+const CURRENCY_MAP: Record<string, string> = { BDT: '৳', INR: '₹', USD: '$', EUR: '€', GBP: '£' };
+const LOCALE_MAP: Record<string, string> = { BDT: 'en-BD', INR: 'en-IN', USD: 'en-US', EUR: 'en-DE', GBP: 'en-GB' };
+
 export default function CouponsPage() {
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [loading, setLoading] = useState(true);
@@ -50,7 +53,27 @@ export default function CouponsPage() {
     maxUses: '', affiliateId: '', expiresAt: '',
   });
 
-  useEffect(() => { fetchCoupons(); }, []);
+  const [locale, setLocale] = useState('en-IN');
+  const [currencySymbol, setCurrencySymbol] = useState('৳');
+
+  const fetchSettings = async () => {
+    try {
+      const res = await fetch('/api/admin/settings');
+      const json = await res.json();
+      if (json.success) {
+        const currency = json.settings.currency;
+        setCurrencySymbol(CURRENCY_MAP[currency] || '৳');
+        setLocale(LOCALE_MAP[currency] || 'en-IN');
+      }
+    } catch (error) {
+      console.error('Failed to fetch settings:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchSettings();
+    fetchCoupons();
+  }, []);
 
   const fetchCoupons = async () => {
     try {
@@ -146,7 +169,7 @@ export default function CouponsPage() {
     setTimeout(() => setCopied(null), 2000);
   };
 
-  const formatDate = (d: string) => new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+  const formatDate = (d: string) => new Date(d).toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' });
 
   if (loading) {
     return (
@@ -239,7 +262,7 @@ export default function CouponsPage() {
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline">
-                        {c.discountType === 'PERCENTAGE' ? `${c.discountValue}%` : `₹${c.discountValue}`}
+                        {c.discountType === 'PERCENTAGE' ? `${c.discountValue}%` : `${currencySymbol}${c.discountValue}`}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-sm">{c.usedCount}{c.maxUses ? `/${c.maxUses}` : ''}</TableCell>
@@ -286,7 +309,7 @@ export default function CouponsPage() {
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="PERCENTAGE">Percentage (%)</SelectItem>
-                    <SelectItem value="FIXED">Fixed Amount (₹)</SelectItem>
+                    <SelectItem value="FIXED">Fixed Amount ({currencySymbol})</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

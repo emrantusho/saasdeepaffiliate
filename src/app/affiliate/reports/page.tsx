@@ -62,6 +62,8 @@ export default function ReportsPage() {
     totalConversions: 0,
     conversionRate: 0,
   });
+  const [currencySymbol, setCurrencySymbol] = useState('৳');
+  const [locale, setLocale] = useState('en-BD');
   const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
 
   useEffect(() => {
@@ -74,6 +76,11 @@ export default function ReportsPage() {
       const res = await fetch('/api/affiliate/profile');
       const data = await res.json();
       if (data.success) {
+        const currencyCode = data.currency || 'BDT';
+        const sym = currencyCode === 'BDT' ? '৳' : currencyCode === 'USD' ? '$' : currencyCode === 'INR' ? '₹' : currencyCode === 'EUR' ? '€' : currencyCode === 'GBP' ? '£' : '৳';
+        const loc = currencyCode === 'BDT' ? 'en-BD' : currencyCode === 'USD' ? 'en-US' : currencyCode === 'INR' ? 'en-IN' : currencyCode === 'EUR' ? 'en-DE' : currencyCode === 'GBP' ? 'en-GB' : 'en-BD';
+        setCurrencySymbol(sym);
+        setLocale(loc);
         const referrals = data.referrals || [];
         const commissions = data.commissions || [];
         const conversions = data.conversions || [];
@@ -98,7 +105,7 @@ export default function ReportsPage() {
           d.setMonth(d.getMonth() - i);
           const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
           months[key] = {
-            month: d.toLocaleDateString('en-IN', { month: 'short', year: 'numeric' }),
+            month: d.toLocaleDateString(loc, { month: 'short', year: 'numeric' }),
             referrals: 0,
             conversions: 0,
             earnings: 0,
@@ -135,10 +142,10 @@ export default function ReportsPage() {
   };
 
   const formatCurrency = (cents: number) =>
-    `\u20B9${(cents / 100).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    `${currencySymbol}${(cents / 100).toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
   const exportCSV = () => {
-    const headers = ['Month', 'Referrals', 'Conversions', 'Earnings (₹)'];
+    const headers = ['Month', 'Referrals', 'Conversions', `Earnings (${currencySymbol})`];
     const rows = monthlyData.map((m) => [m.month, m.referrals, m.conversions, (m.earnings / 100).toFixed(2)]);
     const csv = [headers, ...rows].map((row) => row.join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });

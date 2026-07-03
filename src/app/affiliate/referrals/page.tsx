@@ -70,6 +70,8 @@ export default function ReferralsPage() {
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
+  const [currencySymbol, setCurrencySymbol] = useState('৳');
+  const [locale, setLocale] = useState('en-BD');
   const [submitForm, setSubmitForm] = useState({
     leadName: '',
     leadEmail: '',
@@ -78,6 +80,21 @@ export default function ReferralsPage() {
 
   useEffect(() => {
     if (!authLoading && user) fetchReferrals();
+  }, [authLoading, user]);
+
+  useEffect(() => {
+    if (!authLoading && user) {
+      fetch('/api/affiliate/profile')
+        .then(r => r.json())
+        .then(data => {
+          if (data.success) {
+            const c = data.currency || 'BDT';
+            setCurrencySymbol(c === 'BDT' ? '৳' : c === 'USD' ? '$' : c === 'INR' ? '₹' : c === 'EUR' ? '€' : c === 'GBP' ? '£' : '৳');
+            setLocale(c === 'BDT' ? 'en-BD' : c === 'USD' ? 'en-US' : c === 'INR' ? 'en-IN' : c === 'EUR' ? 'en-DE' : c === 'GBP' ? 'en-GB' : 'en-BD');
+          }
+        })
+        .catch(() => {});
+    }
   }, [authLoading, user]);
 
   const fetchReferrals = async () => {
@@ -128,7 +145,7 @@ export default function ReferralsPage() {
   };
 
   const formatDate = (date: string) =>
-    new Date(date).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' });
+    new Date(date).toLocaleDateString(locale, { year: 'numeric', month: 'short', day: 'numeric' });
 
   const getStatusBadge = (status: string) => {
     const map: Record<string, { variant: 'default' | 'secondary' | 'destructive' | 'outline'; icon: React.ElementType }> = {
@@ -305,7 +322,7 @@ export default function ReferralsPage() {
                     <TableCell>{getStatusBadge(ref.status)}</TableCell>
                     <TableCell className="text-muted-foreground text-sm">{formatDate(ref.createdAt)}</TableCell>
                     <TableCell className="text-right font-semibold">
-                      {`\u20B9${(Number(ref.estimatedValue) || 0).toFixed(2)}`}
+                      {`${currencySymbol}${(Number(ref.estimatedValue) || 0).toFixed(2)}`}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -345,7 +362,7 @@ export default function ReferralsPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label>Estimated Deal Size (₹) *</Label>
+              <Label>Estimated Deal Size ({currencySymbol}) *</Label>
               <Input
                 type="number"
                 required

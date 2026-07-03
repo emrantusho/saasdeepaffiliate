@@ -72,6 +72,9 @@ interface ApiKey {
   _count?: { usageLogs: number };
 }
 
+const CURRENCY_MAP: Record<string, string> = { BDT: '৳', INR: '₹', USD: '$', EUR: '€', GBP: '£' };
+const LOCALE_MAP: Record<string, string> = { BDT: 'en-BD', INR: 'en-IN', USD: 'en-US', EUR: 'en-DE', GBP: 'en-GB' };
+
 export default function ApiKeysPage() {
   const [keys, setKeys] = useState<ApiKey[]>([]);
   const [loading, setLoading] = useState(true);
@@ -86,6 +89,9 @@ export default function ApiKeysPage() {
     scopes: ['read'] as string[],
   });
 
+  const [locale, setLocale] = useState('en-IN');
+  const [currencySymbol, setCurrencySymbol] = useState('৳');
+
   const fetchKeys = useCallback(async () => {
     try {
       const res = await fetch('/api/admin/api-keys');
@@ -98,7 +104,22 @@ export default function ApiKeysPage() {
     }
   }, []);
 
+  const fetchSettings = async () => {
+    try {
+      const res = await fetch('/api/admin/settings');
+      const json = await res.json();
+      if (json.success) {
+        const currency = json.settings.currency;
+        setCurrencySymbol(CURRENCY_MAP[currency] || '৳');
+        setLocale(LOCALE_MAP[currency] || 'en-IN');
+      }
+    } catch (error) {
+      console.error('Failed to fetch settings:', error);
+    }
+  };
+
   useEffect(() => {
+    fetchSettings();
     fetchKeys();
   }, [fetchKeys]);
 
@@ -343,13 +364,13 @@ export default function ApiKeysPage() {
                       <TableCell className="text-right text-sm">{(key._count?.usageLogs || 0).toLocaleString()}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">
                         {key.lastUsedAt
-                          ? new Date(key.lastUsedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
+                          ? new Date(key.lastUsedAt).toLocaleDateString(locale, { day: 'numeric', month: 'short' })
                           : 'Never'}
                       </TableCell>
                       <TableCell className="text-sm">
                         {key.expiresAt ? (
                           <span className={isExpired ? 'text-destructive' : 'text-muted-foreground'}>
-                            {isExpired ? 'Expired' : new Date(key.expiresAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                            {isExpired ? 'Expired' : new Date(key.expiresAt).toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' })}
                           </span>
                         ) : (
                           <span className="text-muted-foreground">Never</span>

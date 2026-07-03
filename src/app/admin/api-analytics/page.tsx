@@ -84,10 +84,15 @@ interface AnalyticsData {
   recentLogs: RecentLog[];
 }
 
+const CURRENCY_MAP: Record<string, string> = { BDT: '৳', INR: '₹', USD: '$', EUR: '€', GBP: '£' };
+const LOCALE_MAP: Record<string, string> = { BDT: 'en-BD', INR: 'en-IN', USD: 'en-US', EUR: 'en-DE', GBP: 'en-GB' };
+
 export default function ApiAnalyticsPage() {
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState('7d');
+  const [locale, setLocale] = useState('en-IN');
+  const [currencySymbol, setCurrencySymbol] = useState('৳');
 
   const fetchAnalytics = useCallback(async () => {
     setLoading(true);
@@ -103,7 +108,22 @@ export default function ApiAnalyticsPage() {
     }
   }, [period]);
 
+  const fetchSettings = async () => {
+    try {
+      const res = await fetch('/api/admin/settings');
+      const json = await res.json();
+      if (json.success) {
+        const currency = json.settings.currency;
+        setCurrencySymbol(CURRENCY_MAP[currency] || '৳');
+        setLocale(LOCALE_MAP[currency] || 'en-IN');
+      }
+    } catch (error) {
+      console.error('Failed to fetch settings:', error);
+    }
+  };
+
   useEffect(() => {
+    fetchSettings();
     fetchAnalytics();
   }, [fetchAnalytics]);
 
@@ -392,7 +412,7 @@ export default function ApiAnalyticsPage() {
                           <TableCell className="text-sm text-muted-foreground">{log.apiKey?.name || '—'}</TableCell>
                           <TableCell className="text-xs text-muted-foreground font-mono">{log.ipAddress || '—'}</TableCell>
                           <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
-                            {new Date(log.createdAt).toLocaleString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', day: 'numeric', month: 'short' })}
+                            {new Date(log.createdAt).toLocaleString(locale, { hour: '2-digit', minute: '2-digit', second: '2-digit', day: 'numeric', month: 'short' })}
                           </TableCell>
                         </TableRow>
                       ))}

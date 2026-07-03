@@ -40,6 +40,9 @@ interface Invoice {
   createdAt: string;
 }
 
+const CURRENCY_MAP: Record<string, string> = { BDT: '৳', INR: '₹', USD: '$', EUR: '€', GBP: '£' };
+const LOCALE_MAP: Record<string, string> = { BDT: 'en-BD', INR: 'en-IN', USD: 'en-US', EUR: 'en-DE', GBP: 'en-GB' };
+
 export default function InvoicesPage() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
@@ -50,7 +53,27 @@ export default function InvoicesPage() {
     affiliateId: '', amountCents: '', taxCents: '0', notes: '', dueAt: '',
   });
 
-  useEffect(() => { fetchInvoices(); }, []);
+  const [locale, setLocale] = useState('en-IN');
+  const [currencySymbol, setCurrencySymbol] = useState('৳');
+
+  const fetchSettings = async () => {
+    try {
+      const res = await fetch('/api/admin/settings');
+      const json = await res.json();
+      if (json.success) {
+        const currency = json.settings.currency;
+        setCurrencySymbol(CURRENCY_MAP[currency] || '৳');
+        setLocale(LOCALE_MAP[currency] || 'en-IN');
+      }
+    } catch (error) {
+      console.error('Failed to fetch settings:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchSettings();
+    fetchInvoices();
+  }, []);
 
   const fetchInvoices = async () => {
     try {
@@ -119,9 +142,9 @@ export default function InvoicesPage() {
   };
 
   const formatCurrency = (cents: number) =>
-    `\u20B9${(cents / 100).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    `${currencySymbol}${(cents / 100).toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-  const formatDate = (d: string) => new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+  const formatDate = (d: string) => new Date(d).toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' });
 
   const getStatusBadge = (status: string) => {
     const map: Record<string, { variant: 'default' | 'secondary' | 'destructive' | 'outline'; icon: React.ElementType }> = {
@@ -280,7 +303,7 @@ export default function InvoicesPage() {
               <div className="grid gap-2">
                 <Label>Amount (cents) *</Label>
                 <Input type="number" value={form.amountCents} onChange={e => setForm({...form, amountCents: e.target.value})} placeholder="100000" />
-                <p className="text-xs text-muted-foreground">100000 = ₹1,000</p>
+                <p className="text-xs text-muted-foreground">100000 = {currencySymbol}1,000</p>
               </div>
               <div className="grid gap-2">
                 <Label>Tax (cents)</Label>

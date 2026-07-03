@@ -30,6 +30,9 @@ interface AdminProfile {
   createdAt: string;
 }
 
+const CURRENCY_MAP: Record<string, string> = { BDT: '৳', INR: '₹', USD: '$', EUR: '€', GBP: '£' };
+const LOCALE_MAP: Record<string, string> = { BDT: 'en-BD', INR: 'en-IN', USD: 'en-US', EUR: 'en-DE', GBP: 'en-GB' };
+
 export default function SettingsPage() {
   const [profile, setProfile] = useState<AdminProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -38,7 +41,25 @@ export default function SettingsPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
 
+  const [locale, setLocale] = useState('en-IN');
+  const [currencySymbol, setCurrencySymbol] = useState('৳');
+
+  const fetchSettings = async () => {
+    try {
+      const res = await fetch('/api/admin/settings');
+      const json = await res.json();
+      if (json.success) {
+        const currency = json.settings.currency;
+        setCurrencySymbol(CURRENCY_MAP[currency] || '৳');
+        setLocale(LOCALE_MAP[currency] || 'en-IN');
+      }
+    } catch (error) {
+      console.error('Failed to fetch settings:', error);
+    }
+  };
+
   useEffect(() => {
+    fetchSettings();
     fetchProfile();
   }, []);
 
@@ -175,7 +196,7 @@ export default function SettingsPage() {
                 <div>
                   <p className="text-sm font-medium">Account Created</p>
                   <p className="text-sm text-muted-foreground">
-                    {new Date(profile.createdAt).toLocaleDateString('en-IN', {
+                    {new Date(profile.createdAt).toLocaleDateString(locale, {
                       day: 'numeric',
                       month: 'long',
                       year: 'numeric',

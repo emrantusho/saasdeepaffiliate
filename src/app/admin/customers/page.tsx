@@ -70,6 +70,9 @@ const statusConfig: Record<string, { label: string; variant: 'default' | 'second
   REJECTED: { label: 'Rejected', variant: 'destructive' },
 };
 
+const CURRENCY_MAP: Record<string, string> = { BDT: '৳', INR: '₹', USD: '$', EUR: '€', GBP: '£' };
+const LOCALE_MAP: Record<string, string> = { BDT: 'en-BD', INR: 'en-IN', USD: 'en-US', EUR: 'en-DE', GBP: 'en-GB' };
+
 export default function CustomersPage() {
   const router = useRouter();
   const [referrals, setReferrals] = useState<Referral[]>([]);
@@ -78,7 +81,25 @@ export default function CustomersPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
+  const [locale, setLocale] = useState('en-IN');
+  const [currencySymbol, setCurrencySymbol] = useState('৳');
+
+  const fetchSettings = async () => {
+    try {
+      const res = await fetch('/api/admin/settings');
+      const json = await res.json();
+      if (json.success) {
+        const currency = json.settings.currency;
+        setCurrencySymbol(CURRENCY_MAP[currency] || '৳');
+        setLocale(LOCALE_MAP[currency] || 'en-IN');
+      }
+    } catch (error) {
+      console.error('Failed to fetch settings:', error);
+    }
+  };
+
   useEffect(() => {
+    fetchSettings();
     fetchReferrals();
   }, []);
 
@@ -288,7 +309,7 @@ export default function CustomersPage() {
                     <TableCell>
                       <div className="flex items-center gap-1 text-sm font-medium">
                         <IndianRupee className="h-3.5 w-3.5" />
-                        {referral.estimatedValue.toLocaleString('en-IN')}
+                        {referral.estimatedValue.toLocaleString(locale)}
                       </div>
                     </TableCell>
                     <TableCell>
@@ -297,7 +318,7 @@ export default function CustomersPage() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {new Date(referral.createdAt).toLocaleDateString('en-IN', {
+                      {new Date(referral.createdAt).toLocaleDateString(locale, {
                         day: 'numeric',
                         month: 'short',
                         year: 'numeric',

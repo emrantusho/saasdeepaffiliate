@@ -74,6 +74,9 @@ const statusConfig: Record<string, { label: string; variant: 'default' | 'second
   REJECTED: { label: 'Rejected', variant: 'destructive', icon: XCircle },
 };
 
+const CURRENCY_MAP: Record<string, string> = { BDT: '৳', INR: '₹', USD: '$', EUR: '€', GBP: '£' };
+const LOCALE_MAP: Record<string, string> = { BDT: 'en-BD', INR: 'en-IN', USD: 'en-US', EUR: 'en-DE', GBP: 'en-GB' };
+
 export default function CustomerDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -91,7 +94,25 @@ export default function CustomerDetailPage() {
   const [editEmail, setEditEmail] = useState('');
   const [reviewNotes, setReviewNotes] = useState('');
 
+  const [locale, setLocale] = useState('en-IN');
+  const [currencySymbol, setCurrencySymbol] = useState('৳');
+
+  const fetchSettings = async () => {
+    try {
+      const res = await fetch('/api/admin/settings');
+      const json = await res.json();
+      if (json.success) {
+        const currency = json.settings.currency;
+        setCurrencySymbol(CURRENCY_MAP[currency] || '৳');
+        setLocale(LOCALE_MAP[currency] || 'en-IN');
+      }
+    } catch (error) {
+      console.error('Failed to fetch settings:', error);
+    }
+  };
+
   useEffect(() => {
+    fetchSettings();
     fetchReferral();
   }, [id]);
 
@@ -400,7 +421,7 @@ export default function CustomerDetailPage() {
                 <span className="text-sm text-muted-foreground">Estimated Value</span>
                 <span className="flex items-center gap-1 font-semibold">
                   <IndianRupee className="h-3.5 w-3.5" />
-                  {referral.estimatedValue.toLocaleString('en-IN')}
+                  {referral.estimatedValue.toLocaleString(locale)}
                 </span>
               </div>
               <div className="flex items-center justify-between">
@@ -412,7 +433,7 @@ export default function CustomerDetailPage() {
                 <span className="text-sm font-medium">Est. Commission</span>
                 <span className="flex items-center gap-1 text-lg font-bold text-primary">
                   <IndianRupee className="h-4 w-4" />
-                  {estimatedCommission.toLocaleString('en-IN')}
+                  {estimatedCommission.toLocaleString(locale)}
                 </span>
               </div>
             </CardContent>
@@ -471,13 +492,13 @@ export default function CustomerDetailPage() {
                   <div>
                     <p className="text-sm font-medium">Lead Submitted</p>
                     <p className="text-xs text-muted-foreground">
-                      {new Date(referral.createdAt).toLocaleDateString('en-IN', {
+                      {new Date(referral.createdAt).toLocaleDateString(locale, {
                         day: 'numeric',
                         month: 'long',
                         year: 'numeric',
                       })}
                       {' at '}
-                      {new Date(referral.createdAt).toLocaleTimeString('en-IN', {
+                      {new Date(referral.createdAt).toLocaleTimeString(locale, {
                         hour: '2-digit',
                         minute: '2-digit',
                       })}

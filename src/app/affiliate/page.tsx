@@ -79,7 +79,8 @@ export default function AffiliateDashboard() {
   const { user, loading: authLoading } = useAuth();
   const [stats, setStats] = useState<AffiliateStats | null>(null);
   const [referrals, setReferrals] = useState<Referral[]>([]);
-  const [currencySymbol, setCurrencySymbol] = useState('₹');
+  const [currencySymbol, setCurrencySymbol] = useState('৳');
+  const [locale, setLocale] = useState('en-BD');
   const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [copied, setCopied] = useState<'link' | 'code' | null>(null);
@@ -116,11 +117,13 @@ export default function AffiliateDashboard() {
           conversionRate: data.stats?.conversionRate || 0,
           referralLink: `${window.location.origin}/r/${data.affiliate?.referralCode}`,
           referralCode: data.affiliate?.referralCode || '',
-          currencySymbol: data.currencySymbol || '₹',
+          currencySymbol: data.currencySymbol || '৳',
           nextMaturesAt: data.stats?.nextMaturesAt || null,
         });
         setReferrals(data.referrals || []);
-        setCurrencySymbol(data.currencySymbol || '₹');
+        setCurrencySymbol(data.currencySymbol || '৳');
+        const cCode = data.currency || 'BDT';
+        setLocale(cCode === 'BDT' ? 'en-BD' : cCode === 'USD' ? 'en-US' : cCode === 'INR' ? 'en-IN' : cCode === 'EUR' ? 'en-DE' : cCode === 'GBP' ? 'en-GB' : 'en-BD');
       }
     } catch (error) {
       console.error('Failed to load dashboard data:', error);
@@ -187,7 +190,7 @@ export default function AffiliateDashboard() {
   };
 
   const formatDate = (date: string) =>
-    new Date(date).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' });
+    new Date(date).toLocaleDateString(locale, { year: 'numeric', month: 'short', day: 'numeric' });
 
   const formatCurrency = (cents: number) =>
     `${currencySymbol}${(cents / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;

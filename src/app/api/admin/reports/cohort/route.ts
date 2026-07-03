@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { getLocale } from '@/lib/currency';
 
 async function verifyAdmin(request: NextRequest) {
   try {
@@ -18,6 +19,7 @@ export async function GET(request: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   try {
+    const locale = await getLocale();
     const url = new URL(request.url);
     const period = url.searchParams.get('period') || '6m'; // 3m, 6m, 12m
     const groupBy = url.searchParams.get('groupBy') || 'month'; // week, month
@@ -66,11 +68,11 @@ export async function GET(request: NextRequest) {
         weekStart.setDate(weekStart.getDate() - weekStart.getDay());
         weekStart.setHours(0, 0, 0, 0);
         cohortKey = weekStart.toISOString().slice(0, 10);
-        cohortLabel = `Week of ${weekStart.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}`;
+        cohortLabel = `Week of ${weekStart.toLocaleDateString(locale, { month: 'short', day: 'numeric' })}`;
         cohortStart = weekStart;
       } else {
         cohortKey = `${joinDate.getFullYear()}-${String(joinDate.getMonth() + 1).padStart(2, '0')}`;
-        cohortLabel = joinDate.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
+        cohortLabel = joinDate.toLocaleDateString(locale, { month: 'long', year: 'numeric' });
         cohortStart = new Date(joinDate.getFullYear(), joinDate.getMonth(), 1);
       }
 

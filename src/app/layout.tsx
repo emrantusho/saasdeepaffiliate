@@ -11,6 +11,7 @@ export async function generateMetadata(): Promise<Metadata> {
     return {
       title: `${name} - Affiliate Marketing Platform`,
       description: `Join ${name} affiliate program and start earning commissions.`,
+      icons: settings?.favicon ? [{ rel: 'icon', url: settings.favicon }, { rel: 'apple-touch-icon', url: settings.favicon }] : undefined,
     };
   } catch {
     return {

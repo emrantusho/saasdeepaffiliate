@@ -137,7 +137,8 @@ export const PartnerRow = ({
   revenue,
   status,
   avatar,
-  onClick
+  onClick,
+  currencySymbol = '৳'
 }: {
   name: string;
   email: string;
@@ -146,6 +147,7 @@ export const PartnerRow = ({
   status: 'ACTIVE' | 'PENDING' | 'SUSPENDED';
   avatar?: string;
   onClick?: () => void;
+  currencySymbol?: string;
 }) => {
   const statusStyles = {
     ACTIVE: { bg: 'bg-emerald-50', text: 'text-emerald-700', dot: 'bg-emerald-500' },
@@ -182,7 +184,7 @@ export const PartnerRow = ({
 
       <div className="text-right px-4">
         <div className="text-xs text-gray-500 mb-1">Revenue</div>
-        <div className="font-bold text-gray-900">₹{(revenue / 100).toFixed(2)}</div>
+        <div className="font-bold text-gray-900">{currencySymbol}{(revenue / 100).toFixed(2)}</div>
       </div>
 
       <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${style.bg} ${style.text}`}>
@@ -203,7 +205,8 @@ export const CustomerRow = ({
   date,
   amount,
   status,
-  onClick
+  onClick,
+  currencySymbol = '৳'
 }: {
   email: string;
   partner: string;
@@ -211,6 +214,7 @@ export const CustomerRow = ({
   amount?: number;
   status: 'APPROVED' | 'PENDING' | 'REJECTED';
   onClick?: () => void;
+  currencySymbol?: string;
 }) => {
   const statusStyles = {
     APPROVED: { bg: 'bg-emerald-50', text: 'text-emerald-700', dot: 'bg-emerald-500' },
@@ -232,7 +236,7 @@ export const CustomerRow = ({
       <div className="text-gray-900 font-medium truncate">{email}</div>
       <div className="text-gray-600 truncate">{partner}</div>
       <div className="font-semibold text-gray-900">
-        {amount !== undefined ? `₹${(amount / 100).toFixed(2)}` : '-'}
+        {amount !== undefined ? `${currencySymbol}${(amount / 100).toFixed(2)}` : '-'}
       </div>
       <div className="flex justify-end">
         <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${style.bg} ${style.text}`}>
