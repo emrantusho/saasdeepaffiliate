@@ -45,7 +45,7 @@ interface Program {
 
 const emptyForm = {
   name: '', slug: '', description: '', commissionRate: '20', commissionType: 'PERCENTAGE',
-  cookieDuration: '30', currency: 'INR', autoApprove: false, minPayoutCents: '100000',
+  cookieDuration: '30', currency: 'BDT', autoApprove: false, minPayoutCents: '100000',
   payoutFrequency: 'MONTHLY', termsUrl: '', logoUrl: '', brandColor: '#6366f1',
 };
 

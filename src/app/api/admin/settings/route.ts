@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
           productName: 'My Product',
           programName: "My Product's Affiliate Program",
           websiteUrl: 'https://example.com',
-          currency: 'INR',
+          currency: 'BDT',
           portalSubdomain: 'myprogram',
           minimumPayoutThreshold: 0,
           payoutTerm: 'NET-15',
@@ -99,7 +99,7 @@ export async function PUT(request: NextRequest) {
           productName: 'My Product',
           programName: "My Product's Affiliate Program",
           websiteUrl: 'https://example.com',
-          currency: 'INR',
+          currency: 'BDT',
           portalSubdomain: 'myprogram'
         }
       });

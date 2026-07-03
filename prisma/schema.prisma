@@ -191,7 +191,7 @@ model ProgramSettings {
   productName               String   @map("product_name")
   programName               String   @map("program_name")
   websiteUrl                String   @map("website_url")
-  currency                  String   @default("INR")
+  currency                  String   @default("BDT")
   blockedCountries          Json     @default("[]") @map("blocked_countries")
   portalSubdomain           String   @map("portal_subdomain")
   termsOfService            String?  @map("terms_of_service")
@@ -643,7 +643,7 @@ model Program {
   commissionRate    Float    @default(20) @map("commission_rate")
   commissionType    String   @default("PERCENTAGE") @map("commission_type")
   cookieDuration    Int      @default(30) @map("cookie_duration") // days
-  currency          String   @default("INR")
+  currency          String   @default("BDT")
   isActive          Boolean  @default(true) @map("is_active")
   isDefault         Boolean  @default(false) @map("is_default")
   autoApprove       Boolean  @default(false) @map("auto_approve")
