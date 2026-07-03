@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -21,18 +21,32 @@ import {
   InputOTPSeparator,
 } from '@/components/ui/input-otp';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Target, Mail, ShieldCheck, ArrowLeft, Loader2 } from 'lucide-react';
+import { Target, Mail, ShieldCheck, ArrowLeft, Loader2, KeyRound } from 'lucide-react';
 
 type Step = 'email' | 'otp';
+type AuthMode = 'otp' | 'password';
 
 export default function LoginPage() {
   const router = useRouter();
   const [step, setStep] = useState<Step>('email');
+  const [mode, setMode] = useState<AuthMode>('otp');
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+  const [branding, setBranding] = useState({ companyName: '', companyLogo: '' });
+
+  useEffect(() => {
+    fetch('/api/affiliate/branding')
+      .then(r => r.json())
+      .then(d => { if (d.settings) setBranding(d.settings); })
+      .catch(() => {});
+  }, []);
+
+  const displayName = branding.companyName || 'Refferq';
+  const logoUrl = branding.companyLogo;
 
   const handleSendOTP = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,6 +70,42 @@ export default function LoginPage() {
       }
     } catch (_e) {
       setError('Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePasswordLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !password) {
+      setError('Email and password are required');
+      return;
+    }
+    setError('');
+    setLoading(true);
+
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        const user = data.user;
+        if (user.role === 'ADMIN') {
+          router.push('/admin');
+        } else {
+          router.push('/affiliate');
+        }
+      } else {
+        setError(data.message || 'Invalid email or password');
+      }
+    } catch (_e) {
+      setError('Login failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -127,9 +177,13 @@ export default function LoginPage() {
         {/* Logo & Branding */}
         <div className="text-center space-y-2">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary shadow-lg shadow-primary/25">
-            <Target className="h-7 w-7 text-primary-foreground" />
+            {logoUrl ? (
+              <img src={logoUrl} alt={displayName} className="h-10 w-10 rounded-xl object-contain" />
+            ) : (
+              <Target className="h-7 w-7 text-primary-foreground" />
+            )}
           </div>
-          <h1 className="text-2xl font-bold tracking-tight">Refferq</h1>
+          <h1 className="text-2xl font-bold tracking-tight">{displayName}</h1>
           <p className="text-sm text-muted-foreground">
             Affiliate Marketing Platform
           </p>
@@ -137,12 +191,12 @@ export default function LoginPage() {
 
         {/* Login Card */}
         <Card className="border-0 shadow-xl shadow-black/5">
-          {step === 'email' ? (
+          {step === 'email' && mode === 'otp' ? (
             <>
               <CardHeader className="text-center pb-4">
                 <CardTitle className="text-xl">Welcome back</CardTitle>
                 <CardDescription>
-                  Enter your email to sign in to your account
+                  Enter your email to receive a sign-in code
                 </CardDescription>
               </CardHeader>
               <form onSubmit={handleSendOTP}>
@@ -178,6 +232,87 @@ export default function LoginPage() {
                       <Mail className="mr-2 h-4 w-4" />
                     )}
                     {loading ? 'Sending code...' : 'Continue with Email'}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="link"
+                    size="sm"
+                    onClick={() => { setMode('password'); setError(''); setMessage(''); }}
+                    className="text-muted-foreground"
+                  >
+                    <KeyRound className="mr-1 h-3 w-3" />
+                    Sign in with password instead
+                  </Button>
+                </CardFooter>
+              </form>
+            </>
+          ) : step === 'email' && mode === 'password' ? (
+            <>
+              <CardHeader className="text-center pb-4">
+                <CardTitle className="text-xl">Welcome back</CardTitle>
+                <CardDescription>
+                  Sign in with your email and password
+                </CardDescription>
+              </CardHeader>
+              <form onSubmit={handlePasswordLogin}>
+                <CardContent className="space-y-4">
+                  {error && (
+                    <Alert variant="destructive">
+                      <AlertDescription>{error}</AlertDescription>
+                    </Alert>
+                  )}
+                  <div className="space-y-2">
+                    <Label htmlFor="email-pw">Email address</Label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="email-pw"
+                        type="email"
+                        placeholder="you@example.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="pl-10"
+                        required
+                        autoFocus
+                        autoComplete="email"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Password</Label>
+                    <div className="relative">
+                      <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="password"
+                        type="password"
+                        placeholder="••••••••"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="pl-10"
+                        required
+                        autoComplete="current-password"
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+                <CardFooter className="flex-col gap-4">
+                  <Button type="submit" className="w-full" size="lg" disabled={loading || !email || !password}>
+                    {loading ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <KeyRound className="mr-2 h-4 w-4" />
+                    )}
+                    {loading ? 'Signing in...' : 'Sign in'}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="link"
+                    size="sm"
+                    onClick={() => { setMode('otp'); setError(''); setMessage(''); }}
+                    className="text-muted-foreground"
+                  >
+                    <Mail className="mr-1 h-3 w-3" />
+                    Send me a code instead
                   </Button>
                 </CardFooter>
               </form>
