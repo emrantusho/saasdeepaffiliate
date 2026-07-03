@@ -60,6 +60,8 @@ import {
   ExternalLink,
   Zap,
   Clock,
+  Image,
+  Building2,
 } from 'lucide-react';
 
 interface ProgramSettings {
@@ -148,6 +150,8 @@ export default function ProgramSettingsPage() {
           minimumPayoutThreshold: settings.minimumPayoutThreshold,
           payoutTerm: settings.payoutTerm,
           commissionHoldDays: settings.commissionHoldDays,
+          companyName: settings.companyName,
+          companyLogo: settings.companyLogo,
         }),
       });
       if (res.ok) {
@@ -301,16 +305,41 @@ export default function ProgramSettingsPage() {
                 />
               </div>
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="portalSubdomain">Portal Subdomain</Label>
-              <Input
-                id="portalSubdomain"
-                value={settings.portalSubdomain}
-                onChange={(e) => setSettings({ ...settings, portalSubdomain: e.target.value })}
-              />
+              <div className="grid gap-2">
+                <Label htmlFor="portalSubdomain">Portal Subdomain</Label>
+                <Input
+                  id="portalSubdomain"
+                  value={settings.portalSubdomain}
+                  onChange={(e) => setSettings({ ...settings, portalSubdomain: e.target.value })}
+                />
+              </div>
             </div>
-          </div>
-          <Separator />
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-2">
+                <Label htmlFor="companyName" className="flex items-center gap-1.5">
+                  <Building2 className="h-3.5 w-3.5" /> Company Name
+                </Label>
+                <Input
+                  id="companyName"
+                  value={settings.companyName || ''}
+                  onChange={(e) => setSettings({ ...settings, companyName: e.target.value })}
+                  placeholder="Your Company Name"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="companyLogo" className="flex items-center gap-1.5">
+                  <Image className="h-3.5 w-3.5" /> Logo URL
+                </Label>
+                <Input
+                  id="companyLogo"
+                  value={settings.companyLogo || ''}
+                  onChange={(e) => setSettings({ ...settings, companyLogo: e.target.value })}
+                  placeholder="https://example.com/logo.png"
+                />
+                <p className="text-[10px] text-muted-foreground">Enter a public URL to your logo image</p>
+              </div>
+            </div>
+            <Separator />
           <div className="grid gap-4 md:grid-cols-3">
             <div className="grid gap-2">
               <Label htmlFor="currency">Currency</Label>
