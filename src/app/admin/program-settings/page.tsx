@@ -62,6 +62,7 @@ import {
   Clock,
   Image,
   Building2,
+  Mail,
 } from 'lucide-react';
 
 interface ProgramSettings {

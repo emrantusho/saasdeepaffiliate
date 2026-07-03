@@ -139,8 +139,8 @@ export async function PUT(request: NextRequest) {
     });
 
     // Clear cache
-    revalidateTag('platform-settings');
-    revalidateTag('program-settings');
+    revalidateTag('platform-settings', 'max');
+    revalidateTag('program-settings', 'max');
 
     return NextResponse.json({
       success: true,
@@ -215,7 +215,7 @@ export async function POST(request: NextRequest) {
       });
 
       // Clear cache
-      revalidateTag('program-settings', 'default');
+      revalidateTag('program-settings', 'max');
 
       return NextResponse.json({
         success: true,
@@ -252,7 +252,7 @@ export async function POST(request: NextRequest) {
       });
 
       // Clear cache
-      revalidateTag('program-settings', 'default');
+      revalidateTag('program-settings', 'max');
 
       return NextResponse.json({
         success: true,
@@ -277,7 +277,7 @@ export async function POST(request: NextRequest) {
       });
 
       // Clear cache
-      revalidateTag('program-settings', 'default');
+      revalidateTag('program-settings', 'max');
 
       return NextResponse.json({
         success: true,
