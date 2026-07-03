@@ -28,11 +28,12 @@ type AuthMode = 'otp' | 'password';
 interface BrandingData {
   companyName?: string;
   companyLogo?: string;
+  disableOtp?: boolean;
 }
 
 export default function LoginForm({ branding }: { branding: BrandingData }) {
   const [step, setStep] = useState<Step>('email');
-  const [mode, setMode] = useState<AuthMode>('otp');
+  const [mode, setMode] = useState<AuthMode>(branding.disableOtp ? 'password' : 'otp');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [otp, setOtp] = useState('');
@@ -287,6 +288,11 @@ export default function LoginForm({ branding }: { branding: BrandingData }) {
                       autoComplete="current-password"
                     />
                   </div>
+                </div>
+                <div className="text-right">
+                  <Link href="/forgot-password" className="text-xs text-primary hover:underline">
+                    Forgot Password?
+                  </Link>
                 </div>
               </CardContent>
               <CardFooter className="flex-col gap-4">

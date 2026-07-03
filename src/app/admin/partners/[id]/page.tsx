@@ -67,7 +67,7 @@ interface Partner {
   referralCode: string;
   partnerGroup?: string;
   commissionRate: number;
-  status: string;
+  userStatus: string;
   totalClicks: number;
   totalLeads: number;
   totalRevenue: number;
@@ -149,7 +149,7 @@ export default function PartnerDetailPage() {
             referralCode: affiliate.referralCode,
             partnerGroup: affiliate.partnerGroup,
             commissionRate: affiliate.commissionRate || 0.20,
-            status: affiliate.status,
+            userStatus: affiliate.user?.status || 'ACTIVE',
             totalClicks: affiliate.totalClicks || 0,
             totalLeads: affiliate.totalLeads || 0,
             totalRevenue: affiliate.totalRevenue || 0,
@@ -384,6 +384,24 @@ export default function PartnerDetailPage() {
           Create Payout
         </Button>
       </div>
+
+      {partner.userStatus !== 'ACTIVE' && (
+        <div className="flex items-center gap-3 rounded-lg border border-destructive/50 bg-destructive/5 p-4">
+          <AlertCircle className="h-5 w-5 text-destructive shrink-0" />
+          <div>
+            <p className="text-sm font-medium text-destructive">
+              This affiliate is {partner.userStatus}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {partner.userStatus === 'SUSPENDED'
+                ? 'This account has been suspended and cannot earn commissions or receive payouts.'
+                : partner.userStatus === 'INACTIVE'
+                ? 'This account is inactive and cannot earn commissions or receive payouts.'
+                : 'This account has not been activated yet.'}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

@@ -85,6 +85,7 @@ interface ProgramSettings {
   resendApiKey?: string;
   fromEmail?: string;
   otpExpiryMinutes?: number;
+  disableOtp?: boolean;
   commissionRules: CommissionRule[];
 }
 
@@ -530,6 +531,16 @@ export default function ProgramSettingsPage() {
                 placeholder="10"
               />
             </div>
+          </div>
+          <div className="flex items-center justify-between rounded-lg border p-3 mt-4">
+            <div>
+              <Label className="font-medium">Disable OTP Login</Label>
+              <p className="text-sm text-muted-foreground">Allow users to log in with password only (no OTP code required)</p>
+            </div>
+            <Switch
+              checked={settings.disableOtp || false}
+              onCheckedChange={(v) => setSettings({ ...settings, disableOtp: v })}
+            />
           </div>
         </CardContent>
       </Card>

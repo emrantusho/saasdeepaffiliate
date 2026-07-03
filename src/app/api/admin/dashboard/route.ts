@@ -26,17 +26,23 @@ export async function GET(request: NextRequest) {
     }
 
     // Calculate platform stats
-    const totalAffiliates = await prisma.affiliate.count();
+    const totalAffiliates = await prisma.affiliate.count({
+      where: { user: { status: 'ACTIVE' } }
+    });
     const totalUsers = await prisma.user.count();
-    const totalReferrals = await prisma.referral.count();
-    const totalConversions = await prisma.conversion.count();
+    const totalReferrals = await prisma.referral.count({
+      where: { affiliate: { user: { status: 'ACTIVE' } } }
+    });
+    const totalConversions = await prisma.conversion.count({
+      where: { affiliate: { user: { status: 'ACTIVE' } } }
+    });
     
     const pendingReferrals = await prisma.referral.count({
-      where: { status: 'PENDING' }
+      where: { status: 'PENDING', affiliate: { user: { status: 'ACTIVE' } } }
     });
     
     const approvedReferrals = await prisma.referral.count({
-      where: { status: 'APPROVED' }
+      where: { status: 'APPROVED', affiliate: { user: { status: 'ACTIVE' } } }
     });
     
     // Calculate ACTUAL transaction revenue from conversions
@@ -46,6 +52,7 @@ export async function GET(request: NextRequest) {
     
     // Calculate ESTIMATED revenue from referrals (leads)
     const referrals = await prisma.referral.findMany({
+      where: { affiliate: { user: { status: 'ACTIVE' } } },
       include: {
         affiliate: true
       }

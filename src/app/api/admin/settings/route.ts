@@ -115,7 +115,7 @@ export async function PUT(request: NextRequest) {
       'blockKeywords', 'blockSocialMediaAds', 'allowManualLeadSubmission',
       'programWideCouponCode', 'hidePartnerLinks', 'requireBusinessEmail',
       'enablePostbacks', 'termsOfService',
-      'resendApiKey', 'fromEmail', 'otpExpiryMinutes'
+      'resendApiKey', 'fromEmail', 'otpExpiryMinutes', 'disableOtp'
     ];
     const sanitizedData: Record<string, any> = {};
     for (const key of allowedFields) {

@@ -17,8 +17,10 @@ model User {
   lastLogin      DateTime?    @map("last_login")
   createdAt      DateTime     @default(now()) @map("created_at")
   updatedAt      DateTime     @updatedAt @map("updated_at")
-  profilePicture String?      @map("profile_picture")
-  affiliate      Affiliate?
+  profilePicture   String?      @map("profile_picture")
+  resetToken       String?      @unique @map("reset_token")
+  resetTokenExpires DateTime?   @map("reset_token_expires")
+  affiliate        Affiliate?
   auditLogs      AuditLog[]
   commissions    Commission[]
   payouts        Payout[]
@@ -222,6 +224,7 @@ model ProgramSettings {
   resendApiKey              String?  @map("resend_api_key")
   fromEmail                 String?  @map("from_email")
   otpExpiryMinutes          Int      @default(10) @map("otp_expiry_minutes")
+  disableOtp                Boolean  @default(false) @map("disable_otp")
   createdAt                 DateTime @default(now()) @map("created_at")
   updatedAt                 DateTime @updatedAt @map("updated_at")
 

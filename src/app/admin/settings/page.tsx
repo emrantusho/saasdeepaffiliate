@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import {
   Card,
   CardContent,
@@ -217,12 +218,12 @@ export default function SettingsPage() {
             <Key className="h-5 w-5" />
             Security
           </CardTitle>
-          <CardDescription>Authentication is managed via OTP</CardDescription>
+          <CardDescription>Authentication is configurable from Program Settings</CardDescription>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">
-            This platform uses passwordless OTP-based authentication. A one-time code is sent to your
-            email each time you log in. No password management is required.
+            Configure authentication method (OTP or Password) and email provider settings in{' '}
+            <Link href="/admin/program-settings" className="text-primary underline">Program Settings</Link>.
           </p>
         </CardContent>
       </Card>
