@@ -83,7 +83,53 @@ export interface CommissionNotificationData {
 }
 
 class EmailService {
-  private defaultFrom = process.env.RESEND_FROM_EMAIL || 'Refferq <noreply@refferq.com>';
+  private _brandName: string | null = null;
+  private _locale: string | null = null;
+  private _currencySymbol: string | null = null;
+  private _defaultFrom: string | null = null;
+
+  private async initSettings(): Promise<void> {
+    if (this._brandName) return;
+    try {
+      const { prisma } = await import('./prisma');
+      const settings = await prisma.programSettings.findFirst({
+        select: { companyName: true, fromEmail: true, currency: true }
+      });
+      this._brandName = settings?.companyName || 'Refferq';
+      this._defaultFrom = settings?.fromEmail
+        ? `${this._brandName} <${settings.fromEmail}>`
+        : process.env.RESEND_FROM_EMAIL || 'Refferq <noreply@refferq.com>';
+      this._locale = this.deriveLocale(settings?.currency || 'BDT');
+      const { getCurrencySymbol } = await import('./currency');
+      this._currencySymbol = await getCurrencySymbol();
+    } catch {
+      this._brandName = 'Refferq';
+      this._defaultFrom = process.env.RESEND_FROM_EMAIL || 'Refferq <noreply@refferq.com>';
+      this._locale = 'en-BD';
+      this._currencySymbol = '৳';
+    }
+  }
+
+  private deriveLocale(currency: string): string {
+    const map: Record<string, string> = { BDT: 'en-BD', INR: 'en-IN', USD: 'en-US', EUR: 'en-EU', GBP: 'en-GB' };
+    return map[currency] || 'en-BD';
+  }
+
+  private get brandName(): string {
+    return this._brandName || 'Refferq';
+  }
+
+  private get locale(): string {
+    return this._locale || 'en-BD';
+  }
+
+  private get currencySymbol(): string {
+    return this._currencySymbol || '৳';
+  }
+
+  private get defaultFrom(): string {
+    return this._defaultFrom || process.env.RESEND_FROM_EMAIL || 'Refferq <noreply@refferq.com>';
+  }
 
   /** Escape HTML special characters to prevent XSS in email templates */
   private escapeHtml(str: string): string {
@@ -178,7 +224,7 @@ class EmailService {
     <html>
     <head>
       <meta charset="utf-8">
-      <title>Welcome to Refferq</title>
+      <title>Welcome to ${this.brandName}</title>
       <style>
         body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
         .header { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
@@ -189,7 +235,7 @@ class EmailService {
     </head>
     <body>
       <div class="header">
-        <h1>Welcome to Refferq! 🎉</h1>
+        <h1>Welcome to ${this.brandName}! 🎉</h1>
       </div>
       <div class="content">
         <h2>Hello ${this.escapeHtml(data.name)}!</h2>
@@ -229,11 +275,11 @@ class EmailService {
         
         <p>If you have any questions, please don't hesitate to contact our support team.</p>
         
-        <p>Best regards,<br>The Refferq Team</p>
+        <p>Best regards,<br>The ${this.brandName} Team</p>
       </div>
       <div class="footer">
         <p>This email was sent to ${this.escapeHtml(data.email)}</p>
-        <p>© ${new Date().getFullYear()} Refferq. All rights reserved.</p>
+        <p>© ${new Date().getFullYear()} ${this.brandName}. All rights reserved.</p>
       </div>
     </body>
     </html>
@@ -278,7 +324,7 @@ class EmailService {
         
         <p>Please review this referral in the admin dashboard and approve or reject it accordingly.</p>
         
-        <p>Best regards,<br>The Refferq System</p>
+        <p>Best regards,<br>The ${this.brandName} System</p>
       </div>
     </body>
     </html>
@@ -331,7 +377,7 @@ class EmailService {
           <a href="${process.env.NEXT_PUBLIC_APP_URL}/affiliate" class="button">View Dashboard</a>
         </div>
         
-        <p>Best regards,<br>The Refferq Team</p>
+        <p>Best regards,<br>The ${this.brandName} Team</p>
       </div>
     </body>
     </html>
@@ -380,7 +426,7 @@ class EmailService {
         
         <p>Thank you for being a valued affiliate partner!</p>
         
-        <p>Best regards,<br>The Refferq Team</p>
+        <p>Best regards,<br>The ${this.brandName} Team</p>
       </div>
     </body>
     </html>
@@ -428,7 +474,7 @@ class EmailService {
         
         <p>Keep up the fantastic work!</p>
         
-        <p>Best regards,<br>The Refferq Team</p>
+        <p>Best regards,<br>The ${this.brandName} Team</p>
       </div>
     </body>
     </html>
@@ -506,7 +552,7 @@ class EmailService {
             Keep up the great work! Continue referring customers to earn more commissions.
           </p>
           
-          <p>Best regards,<br>The Refferq Team</p>
+          <p>Best regards,<br>The ${this.brandName} Team</p>
         </div>
       </body>
       </html>
@@ -514,16 +560,18 @@ class EmailService {
   }
 
   async sendWelcomeEmail(data: WelcomeEmailData): Promise<{ success: boolean; message: string }> {
+    await this.initSettings();
     return this.sendTemplatedEmail({
       to: data.email,
       templateType: 'WELCOME_EMAIL',
-      fallbackSubject: `Welcome to Refferq - ${data.role === 'affiliate' ? 'Affiliate' : 'Admin'} Account Created`,
+      fallbackSubject: `Welcome to ${this.brandName} - ${data.role === 'affiliate' ? 'Affiliate' : 'Admin'} Account Created`,
       variables: data,
       generateFallbackHtml: () => this.generateWelcomeEmailHTML(data),
     });
   }
 
   async sendReferralNotification(data: ReferralNotificationData): Promise<{ success: boolean; message: string }> {
+    await this.initSettings();
     const adminEmails = process.env.ADMIN_EMAILS?.split(',') || ['admin@yourdomain.com'];
     const symbol = await this.getCurrencySymbol();
 
@@ -547,6 +595,7 @@ class EmailService {
   }
 
   async sendApprovalEmail(affiliateEmail: string, data: ApprovalEmailData): Promise<{ success: boolean; message: string }> {
+    await this.initSettings();
     const statusText = data.status === 'approved' ? 'Approved' : 'Rejected';
     const symbol = await this.getCurrencySymbol();
     return this.sendTemplatedEmail({
@@ -559,6 +608,7 @@ class EmailService {
   }
 
   async sendPayoutNotification(data: PayoutNotificationData): Promise<{ success: boolean; message: string }> {
+    await this.initSettings();
     const symbol = await this.getCurrencySymbol();
     return this.sendTemplatedEmail({
       to: data.affiliateEmail,
@@ -571,6 +621,7 @@ class EmailService {
 
   // New method for Conversion Notification
   async sendConversionNotification(data: ConversionNotificationData): Promise<{ success: boolean; message: string }> {
+    await this.initSettings();
     const symbol = await this.getCurrencySymbol();
     return this.sendTemplatedEmail({
       to: data.affiliateEmail,
@@ -583,6 +634,7 @@ class EmailService {
 
   // New method for Commission Notification
   async sendCommissionNotification(data: CommissionNotificationData): Promise<{ success: boolean; message: string }> {
+    await this.initSettings();
     const symbol = await this.getCurrencySymbol();
     return this.sendTemplatedEmail({
       to: data.affiliateEmail,
@@ -594,11 +646,12 @@ class EmailService {
   }
 
   async sendPasswordResetEmail(email: string, resetToken: string): Promise<{ success: boolean; message: string }> {
+    await this.initSettings();
     const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL}/reset-password?token=${resetToken}`;
     return this.sendTemplatedEmail({
       to: email,
       templateType: 'PASSWORD_RESET',
-      fallbackSubject: 'Password Reset Request - Refferq',
+      fallbackSubject: `Password Reset Request - ${this.brandName}`,
       variables: { resetUrl },
       generateFallbackHtml: () => `
       <!DOCTYPE html>
@@ -638,7 +691,7 @@ class EmailService {
           <p>If the button doesn't work, copy and paste this link into your browser:</p>
           <p style="word-break: break-all; background: #f8f9fa; padding: 10px; border-radius: 5px;">${resetUrl}</p>
           
-          <p>Best regards,<br>The Refferq Team</p>
+          <p>Best regards,<br>The ${this.brandName} Team</p>
         </div>
       </body>
       </html>
@@ -647,11 +700,12 @@ class EmailService {
   }
 
   async sendVerificationEmail(email: string, verificationToken: string): Promise<{ success: boolean; message: string }> {
+    await this.initSettings();
     const verificationUrl = `${process.env.NEXT_PUBLIC_APP_URL}/verify-email?token=${verificationToken}`;
     return this.sendTemplatedEmail({
       to: email,
       templateType: 'EMAIL_VERIFICATION',
-      fallbackSubject: 'Verify Your Email Address - Refferq',
+      fallbackSubject: `Verify Your Email Address - ${this.brandName}`,
       variables: { verificationUrl },
       generateFallbackHtml: () => `
       <!DOCTYPE html>
@@ -683,7 +737,7 @@ class EmailService {
           
           <p>This verification link will expire in 24 hours.</p>
           
-          <p>Best regards,<br>The Refferq Team</p>
+          <p>Best regards,<br>The ${this.brandName} Team</p>
         </div>
       </body>
       </html>
@@ -702,6 +756,7 @@ class EmailService {
       transactionId: string;
     }
   ): Promise<{ success: boolean; message: string }> {
+    await this.initSettings();
     const symbol = await this.getCurrencySymbol();
     const commission = this.formatAmount(data.commissionCents, symbol);
     return this.sendTemplatedEmail({
@@ -723,12 +778,13 @@ class EmailService {
       method?: string;
     }
   ): Promise<{ success: boolean; message: string }> {
+    await this.initSettings();
     const symbol = await this.getCurrencySymbol();
-    const amount = (data.amountCents / 100).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const amount = (data.amountCents / 100).toLocaleString(this.locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     return this.sendTemplatedEmail({
       to: affiliateEmail,
       templateType: 'PAYOUT_GENERATED',
-      fallbackSubject: `🎉 Payout Initiated: ₹${amount}`,
+      fallbackSubject: `🎉 Payout Initiated: ${this.currencySymbol}${amount}`,
       variables: { ...data, amount: this.formatAmount(data.amountCents, symbol), symbol },
       generateFallbackHtml: () => `
       <!DOCTYPE html>
@@ -757,7 +813,7 @@ class EmailService {
           
           <div class="amount-box">
             <div style="font-size: 14px; color: #666; margin-bottom: 10px;">Payout Amount</div>
-            <div class="amount">₹${amount}</div>
+            <div class="amount">${this.currencySymbol}${amount}</div>
             <div style="margin-top: 15px;">
               <span class="status-badge">PENDING</span>
             </div>
@@ -785,7 +841,7 @@ class EmailService {
             Thank you for being a valued partner! Continue referring customers to earn more.
           </p>
           
-          <p>Best regards,<br>The Refferq Team</p>
+          <p>Best regards,<br>The ${this.brandName} Team</p>
         </div>
       </body>
       </html>
@@ -804,9 +860,10 @@ class EmailService {
       processedAt: string;
     }
   ): Promise<{ success: boolean; message: string }> {
+    await this.initSettings();
     const symbol = await this.getCurrencySymbol();
-    const amount = (data.amountCents / 100).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    const date = new Date(data.processedAt).toLocaleDateString('en-IN', {
+    const amount = (data.amountCents / 100).toLocaleString(this.locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const date = new Date(data.processedAt).toLocaleDateString(this.locale, {
       year: 'numeric',
       month: 'long',
       day: 'numeric'
@@ -814,7 +871,7 @@ class EmailService {
     return this.sendTemplatedEmail({
       to: affiliateEmail,
       templateType: 'PARTNER_PAID',
-      fallbackSubject: `✅ Payment Completed: ₹${amount} Paid!`,
+      fallbackSubject: `✅ Payment Completed: ${this.currencySymbol}${amount} Paid!`,
       variables: { ...data, amount: this.formatAmount(data.amountCents, symbol), date, symbol },
       generateFallbackHtml: () => `
       <!DOCTYPE html>
@@ -846,7 +903,7 @@ class EmailService {
           
           <div class="amount-box">
             <div style="font-size: 14px; color: #666; margin-bottom: 10px;">Amount Paid</div>
-            <div class="amount">₹${amount}</div>
+            <div class="amount">${this.currencySymbol}${amount}</div>
             <div style="margin-top: 15px;">
               <span class="status-badge">✓ COMPLETED</span>
             </div>
@@ -872,7 +929,7 @@ class EmailService {
             Keep up the excellent work! Continue referring customers to earn more commissions.
           </p>
           
-          <p>Best regards,<br>The Refferq Team</p>
+          <p>Best regards,<br>The ${this.brandName} Team</p>
         </div>
       </body>
       </html>
@@ -881,6 +938,7 @@ class EmailService {
   }
 
   async sendCustomEmail(to: string, subject: string, html: string): Promise<{ success: boolean; message: string }> {
+    await this.initSettings();
     try {
       const { Resend } = await import('resend');
       const resend = new Resend(process.env.RESEND_API_KEY);
@@ -901,15 +959,16 @@ class EmailService {
 
   // ─── Generic Email (for system notifications) ────────────────
   async sendGenericEmail(to: string, data: { subject: string; body: string }) {
+    await this.initSettings();
     const html = `
       <div style="font-family: 'Inter', sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
         <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 30px; border-radius: 16px 16px 0 0; text-align: center;">
-          <h1 style="color: #ffffff; font-size: 22px; margin: 0;">Refferq Notification</h1>
+          <h1 style="color: #ffffff; font-size: 22px; margin: 0;">${this.brandName} Notification</h1>
         </div>
         <div style="background: #ffffff; padding: 30px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 16px 16px;">
           <p style="color: #374151; font-size: 15px; line-height: 1.6;">${this.escapeHtml(data.body)}</p>
           <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;" />
-          <p style="color: #9ca3af; font-size: 12px; text-align: center;">This is an automated notification from Refferq.</p>
+          <p style="color: #9ca3af; font-size: 12px; text-align: center;">This is an automated notification from ${this.brandName}.</p>
         </div>
       </div>
     `;

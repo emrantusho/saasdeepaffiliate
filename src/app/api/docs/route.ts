@@ -1,14 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
 
 // Auto-generated OpenAPI spec from Zod schemas
 export async function GET(request: NextRequest) {
+    const settings = await prisma.programSettings.findFirst({
+        select: { companyName: true, fromEmail: true }
+    });
+    const companyName = settings?.companyName || 'Refferq';
+    const contactEmail = settings?.fromEmail || '';
+
     const spec = {
         openapi: '3.0.3',
         info: {
-            title: 'Refferq API',
+            title: `${companyName} API`,
             version: '1.1.0',
             description: 'Open-source affiliate marketing platform API. Manage affiliates, referrals, conversions, commissions, and payouts.',
-            contact: { email: 'hello@refferq.com' },
+            contact: { email: contactEmail },
             license: { name: 'MIT', url: 'https://opensource.org/licenses/MIT' },
         },
         servers: [

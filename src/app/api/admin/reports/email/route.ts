@@ -18,11 +18,23 @@ async function verifyAdmin(request: NextRequest) {
  * POST - Send a report via email to specified recipients.
  * Body: { reportType, recipients, startDate?, endDate?, format? }
  */
+const LOCALE_MAP: Record<string, string> = { BDT: 'en-BD', INR: 'en-IN', USD: 'en-US' };
+const SYMBOL_MAP: Record<string, string> = { BDT: '৳', INR: '₹', USD: '$' };
+
 export async function POST(request: NextRequest) {
   const user = await verifyAdmin(request);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   try {
+    // Fetch ProgramSettings for companyName, fromEmail, currency
+    const settings = await prisma.programSettings.findFirst({
+      select: { companyName: true, fromEmail: true, currency: true }
+    });
+    const companyName = settings?.companyName || 'Refferq';
+    const currency = settings?.currency || 'BDT';
+    const locale = LOCALE_MAP[currency] || 'en-BD';
+    const currencySymbol = SYMBOL_MAP[currency] || '৳';
+
     const body = await request.json();
     const { reportType, recipients, startDate, endDate, format } = body;
 
@@ -40,7 +52,7 @@ export async function POST(request: NextRequest) {
     const csvContent = convertToCSV(reportData.data || [reportData.summary || reportData]);
 
     // Build email HTML
-    const reportDate = new Date().toLocaleDateString('en-IN', {
+    const reportDate = new Date().toLocaleDateString(locale, {
       day: 'numeric',
       month: 'long',
       year: 'numeric',
@@ -71,8 +83,8 @@ export async function POST(request: NextRequest) {
         ${startDate && endDate ? `<p style="margin: 0; opacity: 0.8; font-size: 14px;">${startDate} — ${endDate}</p>` : ''}
       </div>
       <div class="content">
-        ${reportData.summary ? renderSummaryHTML(reportData.summary) : ''}
-        ${reportData.data && reportData.data.length > 0 ? renderTableHTML(reportData.data.slice(0, 20)) : ''}
+        ${reportData.summary ? renderSummaryHTML(reportData.summary, locale, currencySymbol) : ''}
+        ${reportData.data && reportData.data.length > 0 ? renderTableHTML(reportData.data.slice(0, 20), locale, currencySymbol) : ''}
         ${reportData.data && reportData.data.length > 20 ? `<p style="color: #888; font-size: 13px;">Showing 20 of ${reportData.data.length} records. Full data attached as CSV.</p>` : ''}
         <p style="margin-top: 20px;">
           <a href="${process.env.NEXT_PUBLIC_APP_URL}/admin/reports" style="display: inline-block; background: #667eea; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px;">
@@ -81,21 +93,23 @@ export async function POST(request: NextRequest) {
         </p>
       </div>
       <div class="footer">
-        <p>This report was sent from Refferq by ${user.name} (${user.email})</p>
-        <p>© ${new Date().getFullYear()} Refferq. All rights reserved.</p>
+        <p>This report was sent from ${companyName} by ${user.name} (${user.email})</p>
+        <p>© ${new Date().getFullYear()} ${companyName}. All rights reserved.</p>
       </div>
     </body>
     </html>
     `;
 
     // Send to all recipients
-    const fromEmail = process.env.RESEND_FROM_EMAIL || 'Refferq <noreply@refferq.com>';
+    const fromEmail = settings?.fromEmail
+      ? `${companyName} <${settings.fromEmail}>`
+      : process.env.RESEND_FROM_EMAIL || `${companyName} <noreply@refferq.com>`;
     const results = await Promise.allSettled(
       recipients.map((email: string) =>
         resend.emails.send({
           from: fromEmail,
           to: email.trim(),
-          subject: `[Refferq] ${reportData.type || 'Report'} — ${reportDate}`,
+          subject: `[${companyName}] ${reportData.type || 'Report'} — ${reportDate}`,
           html,
         })
       )
@@ -227,7 +241,7 @@ async function generateReportData(reportType: string, startDate?: string, endDat
   };
 }
 
-function renderSummaryHTML(summary: Record<string, unknown>): string {
+function renderSummaryHTML(summary: Record<string, unknown>, locale: string, currencySymbol: string): string {
   return `<div style="margin: 15px 0;">
     ${Object.entries(summary)
       .map(
@@ -235,7 +249,7 @@ function renderSummaryHTML(summary: Record<string, unknown>): string {
       <div class="stat">
         <div class="stat-value">${
           typeof value === 'number' && key.toLowerCase().includes('cents')
-            ? '₹' + (value / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })
+            ? currencySymbol + (value / 100).toLocaleString(locale, { minimumFractionDigits: 2 })
             : value
         }</div>
         <div class="stat-label">${key.replace(/([A-Z])/g, ' $1').replace(/cents$/i, '').trim()}</div>
@@ -245,7 +259,7 @@ function renderSummaryHTML(summary: Record<string, unknown>): string {
   </div>`;
 }
 
-function renderTableHTML(data: Record<string, unknown>[]): string {
+function renderTableHTML(data: Record<string, unknown>[], locale: string, currencySymbol: string): string {
   if (data.length === 0) return '';
   const cols = Object.keys(data[0]);
   return `
@@ -257,7 +271,7 @@ function renderTableHTML(data: Record<string, unknown>[]): string {
             .map((c) => {
               const v = row[c];
               if (typeof v === 'number' && c.toLowerCase().includes('cents')) {
-                return `<td>₹${(v / 100).toFixed(2)}</td>`;
+                return `<td>${currencySymbol}${(v / 100).toLocaleString(locale, { minimumFractionDigits: 2 })}</td>`;
               }
               return `<td>${v ?? '—'}</td>`;
             })

@@ -94,7 +94,7 @@ export class OTPService {
         from: fromEmail,
         to: email,
         subject: 'Your Login Code',
-        html: this.generateOTPEmailTemplate(code, user.name || 'User', settings?.companyName || 'Affiliate Platform')
+        html: this.generateOTPEmailTemplate(code, user.name || 'User', settings?.companyName || 'Affiliate Platform', expiryMinutes)
       });
 
       if (emailResult.error) {
@@ -234,7 +234,7 @@ export class OTPService {
   }
 
   // Generate OTP email template
-  private generateOTPEmailTemplate(code: string, userName: string, companyName: string): string {
+  private generateOTPEmailTemplate(code: string, userName: string, companyName: string, expiryMinutes: number): string {
     return `
       <!DOCTYPE html>
       <html>
@@ -310,7 +310,7 @@ export class OTPService {
             
             <div class="otp-code">
               <div class="code">${code}</div>
-              <p style="margin: 10px 0 0 0; color: #6b7280;">This code expires in 10 minutes</p>
+              <p style="margin: 10px 0 0 0; color: #6b7280;">This code expires in ${expiryMinutes} minutes</p>
             </div>
             
             <div class="warning">
