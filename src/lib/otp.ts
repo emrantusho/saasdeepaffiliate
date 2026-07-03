@@ -64,11 +64,22 @@ export class OTPService {
         }
       });
 
-      // Generate new OTP
-      const code = this.generateOTP();
-      const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+      // Get email settings from DB (fallback to env vars)
+      const settings = await prisma.programSettings.findFirst({
+        select: { resendApiKey: true, fromEmail: true, otpExpiryMinutes: true, companyName: true }
+      });
+      const apiKey = settings?.resendApiKey || process.env.RESEND_API_KEY;
+      const fromEmail = settings?.fromEmail || process.env.RESEND_FROM_EMAIL!;
+      const expiryMinutes = settings?.otpExpiryMinutes || 10;
 
-      // Store OTP in database
+      if (!apiKey) {
+        console.error('No Resend API key configured');
+        return { success: false, message: 'Email service not configured. Contact the administrator.' };
+      }
+
+      const code = this.generateOTP();
+      const expiresAt = new Date(Date.now() + expiryMinutes * 60 * 1000);
+
       await (prisma as any).OTP.create({
         data: {
           email: email.toLowerCase(),
@@ -77,14 +88,13 @@ export class OTPService {
         }
       });
 
-      // Send OTP email
       const { Resend } = await import('resend');
-      const resendClient = new Resend(process.env.RESEND_API_KEY);
+      const resendClient = new Resend(apiKey);
       const emailResult = await resendClient.emails.send({
-        from: process.env.RESEND_FROM_EMAIL!,
+        from: fromEmail,
         to: email,
         subject: 'Your Login Code',
-        html: this.generateOTPEmailTemplate(code, user.name || 'User')
+        html: this.generateOTPEmailTemplate(code, user.name || 'User', settings?.companyName || 'Affiliate Platform')
       });
 
       if (emailResult.error) {
@@ -224,7 +234,7 @@ export class OTPService {
   }
 
   // Generate OTP email template
-  private generateOTPEmailTemplate(code: string, userName: string): string {
+  private generateOTPEmailTemplate(code: string, userName: string, companyName: string): string {
     return `
       <!DOCTYPE html>
       <html>
@@ -291,7 +301,7 @@ export class OTPService {
         <body>
           <div class="container">
             <div class="header">
-              <div class="logo">${process.env.PLATFORM_NAME || 'Affiliate Platform'}</div>
+              <div class="logo">${companyName}</div>
               <h1>Your Login Code</h1>
             </div>
             
@@ -311,13 +321,7 @@ export class OTPService {
             
             <div class="footer">
               <p>Best regards,<br>
-              ${process.env.PLATFORM_NAME || 'Affiliate Platform'} Team</p>
-              <p>
-                Need help? Contact us at 
-                <a href="mailto:${process.env.PLATFORM_SUPPORT_EMAIL}" style="color: #2563eb;">
-                  ${process.env.PLATFORM_SUPPORT_EMAIL}
-                </a>
-              </p>
+              ${companyName} Team</p>
             </div>
           </div>
         </body>

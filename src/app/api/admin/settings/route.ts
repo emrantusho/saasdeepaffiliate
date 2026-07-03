@@ -114,7 +114,8 @@ export async function PUT(request: NextRequest) {
       'brandTextColor', 'favicon', 'hideCustomerEmails', 'disablePersonalizedLinks',
       'blockKeywords', 'blockSocialMediaAds', 'allowManualLeadSubmission',
       'programWideCouponCode', 'hidePartnerLinks', 'requireBusinessEmail',
-      'enablePostbacks', 'termsOfService'
+      'enablePostbacks', 'termsOfService',
+      'resendApiKey', 'fromEmail', 'otpExpiryMinutes'
     ];
     const sanitizedData: Record<string, any> = {};
     for (const key of allowedFields) {

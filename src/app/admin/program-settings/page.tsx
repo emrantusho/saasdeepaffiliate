@@ -81,6 +81,9 @@ interface ProgramSettings {
   payoutFrequency?: string;
   autoApprovePayouts?: boolean;
   minPayoutCents?: number;
+  resendApiKey?: string;
+  fromEmail?: string;
+  otpExpiryMinutes?: number;
   commissionRules: CommissionRule[];
 }
 
@@ -162,6 +165,9 @@ export default function ProgramSettingsPage() {
           payoutFrequency: settings.payoutFrequency,
           autoApprovePayouts: settings.autoApprovePayouts,
           minPayoutCents: settings.minPayoutCents,
+          resendApiKey: settings.resendApiKey,
+          fromEmail: settings.fromEmail,
+          otpExpiryMinutes: settings.otpExpiryMinutes,
         }),
       });
       if (res.ok) {
@@ -475,6 +481,54 @@ export default function ProgramSettingsPage() {
             <p className="text-xs text-muted-foreground">
               Program ID: <span className="font-mono">{settings.programId}</span>
             </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Email Provider Settings */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Mail className="h-5 w-5" />
+            Email Provider
+          </CardTitle>
+          <CardDescription>Configure email sending for OTP, notifications, and broadcasts</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-6">
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-2">
+              <Label htmlFor="resendApiKey">Resend API Key</Label>
+              <Input
+                id="resendApiKey"
+                type="password"
+                value={settings.resendApiKey || ''}
+                onChange={(e) => setSettings({ ...settings, resendApiKey: e.target.value })}
+                placeholder="re_..."
+              />
+              <p className="text-[10px] text-muted-foreground">Get your API key from <a href="https://resend.com" target="_blank" rel="noopener noreferrer" className="underline">resend.com</a></p>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="fromEmail">From Email</Label>
+              <Input
+                id="fromEmail"
+                type="email"
+                value={settings.fromEmail || ''}
+                onChange={(e) => setSettings({ ...settings, fromEmail: e.target.value })}
+                placeholder="noreply@yourdomain.com"
+              />
+            </div>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-2">
+              <Label htmlFor="otpExpiryMinutes">OTP Expiry (minutes)</Label>
+              <Input
+                id="otpExpiryMinutes"
+                type="number"
+                value={settings.otpExpiryMinutes || 10}
+                onChange={(e) => setSettings({ ...settings, otpExpiryMinutes: parseInt(e.target.value) || 10 })}
+                placeholder="10"
+              />
+            </div>
           </div>
         </CardContent>
       </Card>

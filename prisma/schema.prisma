@@ -219,6 +219,9 @@ model ProgramSettings {
   commissionHoldDays        Int      @default(30) @map("commission_hold_days")
   minPayoutCents            Int      @default(100000) @map("min_payout_cents")
   companyName               String?  @map("company_name")
+  resendApiKey              String?  @map("resend_api_key")
+  fromEmail                 String?  @map("from_email")
+  otpExpiryMinutes          Int      @default(10) @map("otp_expiry_minutes")
   createdAt                 DateTime @default(now()) @map("created_at")
   updatedAt                 DateTime @updatedAt @map("updated_at")
 
