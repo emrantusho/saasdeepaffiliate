@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import {
@@ -78,6 +78,20 @@ function AdminSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAuth();
+  const [brandName, setBrandName] = useState('');
+  const [brandLogo, setBrandLogo] = useState('');
+
+  useEffect(() => {
+    fetch('/api/admin/settings')
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) {
+          if (data.settings.companyName) setBrandName(data.settings.companyName);
+          if (data.settings.companyLogo) setBrandLogo(data.settings.companyLogo);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const isActive = (url: string) => {
     if (url === '/admin') return pathname === '/admin';
@@ -91,10 +105,14 @@ function AdminSidebar() {
           <SidebarMenuItem>
             <div className="flex items-center gap-3 px-2 py-1.5">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
-                <span className="text-lg">🎯</span>
+                {brandLogo ? (
+                  <img src={brandLogo} alt={brandName} className="h-8 w-8 rounded-lg object-contain" />
+                ) : (
+                  <span className="text-lg font-bold">{brandName ? brandName.charAt(0).toUpperCase() : 'R'}</span>
+                )}
               </div>
               <div className="flex flex-col">
-                <span className="text-sm font-bold">Refferq</span>
+                <span className="text-sm font-bold">{brandName || 'Admin Dashboard'}</span>
                 <span className="text-xs text-muted-foreground">Admin Dashboard</span>
               </div>
             </div>

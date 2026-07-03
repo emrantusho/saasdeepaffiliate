@@ -77,6 +77,10 @@ interface ProgramSettings {
   minimumPayoutThreshold: number;
   payoutTerm: string;
   commissionHoldDays: number;
+  payoutMethods?: string[];
+  payoutFrequency?: string;
+  autoApprovePayouts?: boolean;
+  minPayoutCents?: number;
   commissionRules: CommissionRule[];
 }
 
@@ -154,6 +158,10 @@ export default function ProgramSettingsPage() {
           commissionHoldDays: settings.commissionHoldDays,
           companyName: settings.companyName,
           companyLogo: settings.companyLogo,
+          payoutMethods: settings.payoutMethods,
+          payoutFrequency: settings.payoutFrequency,
+          autoApprovePayouts: settings.autoApprovePayouts,
+          minPayoutCents: settings.minPayoutCents,
         }),
       });
       if (res.ok) {
@@ -353,6 +361,7 @@ export default function ProgramSettingsPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="BDT">BDT (৳)</SelectItem>
                   <SelectItem value="INR">INR (₹)</SelectItem>
                   <SelectItem value="USD">USD ($)</SelectItem>
                   <SelectItem value="EUR">EUR (€)</SelectItem>
@@ -404,6 +413,62 @@ export default function ProgramSettingsPage() {
                 />
               </div>
               <p className="text-[10px] text-muted-foreground">Number of days to hold commissions for refund protection</p>
+            </div>
+          </div>
+          <Separator />
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-2">
+              <Label htmlFor="payoutMethods">Payout Methods</Label>
+              <Input
+                id="payoutMethods"
+                value={(settings.payoutMethods || []).join(', ')}
+                onChange={(e) =>
+                  setSettings({
+                    ...settings,
+                    payoutMethods: e.target.value.split(',').map(s => s.trim()).filter(Boolean)
+                  })
+                }
+                placeholder="Nagad, bKash, PayPal, Bank Transfer"
+              />
+              <p className="text-[10px] text-muted-foreground">Comma-separated list of payout methods</p>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="payoutFrequency">Payout Frequency</Label>
+              <Select
+                value={settings.payoutFrequency || 'MONTHLY'}
+                onValueChange={(v) => setSettings({ ...settings, payoutFrequency: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="DAILY">Daily</SelectItem>
+                  <SelectItem value="WEEKLY">Weekly</SelectItem>
+                  <SelectItem value="BIWEEKLY">Bi-Weekly</SelectItem>
+                  <SelectItem value="MONTHLY">Monthly</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="flex items-center gap-2">
+              <Switch
+                checked={settings.autoApprovePayouts || false}
+                onCheckedChange={(v) => setSettings({ ...settings, autoApprovePayouts: v })}
+              />
+              <Label>Auto-approve Payouts</Label>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="minPayoutCents">Min Payout Amount (cents)</Label>
+              <Input
+                id="minPayoutCents"
+                type="number"
+                value={settings.minPayoutCents || 0}
+                onChange={(e) =>
+                  setSettings({ ...settings, minPayoutCents: parseInt(e.target.value) || 0 })
+                }
+                placeholder="100000"
+              />
             </div>
           </div>
           <div className="rounded-md bg-muted p-3">

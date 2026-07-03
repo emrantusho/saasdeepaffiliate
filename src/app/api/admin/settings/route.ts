@@ -27,11 +27,11 @@ export async function GET(request: NextRequest) {
       programSettings = await prisma.programSettings.create({
         data: {
           programId: `prg_${Date.now()}`,
-          productName: 'BsBot',
-          programName: "BsBot's Affiliate Program",
-          websiteUrl: 'https://kyns.com',
+          productName: 'My Product',
+          programName: "My Product's Affiliate Program",
+          websiteUrl: 'https://example.com',
           currency: 'INR',
-          portalSubdomain: 'bsbot.tolt.io',
+          portalSubdomain: 'myprogram',
           minimumPayoutThreshold: 0,
           payoutTerm: 'NET-15',
           commissionHoldDays: 30
@@ -96,11 +96,11 @@ export async function PUT(request: NextRequest) {
       programSettings = await prisma.programSettings.create({
         data: {
           programId: `prg_${Date.now()}`,
-          productName: 'BsBot',
-          programName: "BsBot's Affiliate Program",
-          websiteUrl: 'https://kyns.com',
+          productName: 'My Product',
+          programName: "My Product's Affiliate Program",
+          websiteUrl: 'https://example.com',
           currency: 'INR',
-          portalSubdomain: 'bsbot.tolt.io'
+          portalSubdomain: 'myprogram'
         }
       });
     }
@@ -108,9 +108,13 @@ export async function PUT(request: NextRequest) {
     // Update program settings — only allow specific fields (prevent mass assignment)
     const allowedFields = [
       'programName', 'productName', 'websiteUrl', 'currency', 'portalSubdomain',
-      'companyName', 'companyLogo', 'primaryColor', 'secondaryColor',
-      'cookieDuration', 'minimumPayout', 'payoutFrequency', 'autoApprove',
-      'commissionType', 'commissionValue', 'brandingEnabled', 'commissionHoldDays'
+      'companyName', 'companyLogo', 'minimumPayoutThreshold', 'payoutTerm',
+      'commissionHoldDays', 'payoutMethods', 'payoutFrequency', 'autoApprovePayouts',
+      'minPayoutCents', 'cookieDuration', 'brandBackgroundColor', 'brandButtonColor',
+      'brandTextColor', 'favicon', 'hideCustomerEmails', 'disablePersonalizedLinks',
+      'blockKeywords', 'blockSocialMediaAds', 'allowManualLeadSubmission',
+      'programWideCouponCode', 'hidePartnerLinks', 'requireBusinessEmail',
+      'enablePostbacks', 'termsOfService'
     ];
     const sanitizedData: Record<string, any> = {};
     for (const key of allowedFields) {
@@ -134,8 +138,8 @@ export async function PUT(request: NextRequest) {
     });
 
     // Clear cache
-    revalidateTag('platform-settings', 'default');
-    revalidateTag('program-settings', 'default');
+    revalidateTag('platform-settings');
+    revalidateTag('program-settings');
 
     return NextResponse.json({
       success: true,
