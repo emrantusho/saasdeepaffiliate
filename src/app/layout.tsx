@@ -1,12 +1,24 @@
 import React from 'react';
+import type { Metadata } from 'next';
 import { Toaster } from '@/components/ui/sonner';
 import { db } from '@/lib/prisma';
 import './globals.css';
 
-export const metadata = {
-  title: 'Refferq - Modern Affiliate Marketing Platform',
-  description: 'Next-generation affiliate marketing platform with comprehensive tracking, commission management, and payout automation.',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  try {
+    const settings = await db.getPlatformSettings();
+    const name = settings?.companyName || 'Refferq';
+    return {
+      title: `${name} - Affiliate Marketing Platform`,
+      description: `Join ${name} affiliate program and start earning commissions.`,
+    };
+  } catch {
+    return {
+      title: 'Refferq - Modern Affiliate Marketing Platform',
+      description: 'Next-generation affiliate marketing platform with comprehensive tracking, commission management, and payout automation.',
+    };
+  }
+}
 
 export default async function RootLayout({
   children,
