@@ -72,6 +72,8 @@ interface ProgramSettings {
   websiteUrl: string;
   currency: string;
   portalSubdomain: string;
+  companyName?: string;
+  companyLogo?: string;
   minimumPayoutThreshold: number;
   payoutTerm: string;
   commissionHoldDays: number;
