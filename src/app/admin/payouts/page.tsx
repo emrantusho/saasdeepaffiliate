@@ -63,10 +63,18 @@ export default function PayoutsPage() {
   const [payouts, setPayouts] = useState<Payout[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('all');
-  const [currencySymbol, setCurrencySymbol] = useState('₹');
+  const [currencySymbol, setCurrencySymbol] = useState('৳');
+  const [locale, setLocale] = useState('en-BD');
 
   useEffect(() => {
     fetchPayouts();
+    fetch('/api/admin/settings').then(r=>r.json()).then(d => {
+      if (d.success) {
+        const c = d.settings.currency;
+        const LOC: Record<string, string> = { BDT: 'en-BD', USD: 'en-US', INR: 'en-IN', EUR: 'en-DE', GBP: 'en-GB' };
+        setLocale(LOC[c] || 'en-BD');
+      }
+    }).catch(() => {});
   }, []);
 
   const fetchPayouts = async () => {
@@ -75,7 +83,7 @@ export default function PayoutsPage() {
       const data = await res.json();
       if (data.success) {
         setPayouts(data.payouts || []);
-        setCurrencySymbol(data.currencySymbol || '₹');
+        setCurrencySymbol(data.currencySymbol || '৳');
       }
     } catch (error) {
       console.error('Failed to fetch payouts:', error);
@@ -243,7 +251,7 @@ export default function PayoutsPage() {
                         <Badge variant={cfg.variant}>{cfg.label}</Badge>
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
-                        {new Date(payout.createdAt).toLocaleDateString('en-IN', {
+                        {new Date(payout.createdAt).toLocaleDateString(locale, {
                           day: 'numeric',
                           month: 'short',
                           year: 'numeric',
@@ -251,7 +259,7 @@ export default function PayoutsPage() {
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
                         {payout.processedAt
-                          ? new Date(payout.processedAt).toLocaleDateString('en-IN', {
+                          ? new Date(payout.processedAt).toLocaleDateString(locale, {
                             day: 'numeric',
                             month: 'short',
                             year: 'numeric',

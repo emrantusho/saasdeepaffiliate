@@ -81,7 +81,7 @@ export default function CustomersPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
-  const [locale, setLocale] = useState('en-IN');
+  const [locale, setLocale] = useState('en-BD');
   const [currencySymbol, setCurrencySymbol] = useState('৳');
 
   const fetchSettings = async () => {
@@ -91,7 +91,7 @@ export default function CustomersPage() {
       if (json.success) {
         const currency = json.settings.currency;
         setCurrencySymbol(CURRENCY_MAP[currency] || '৳');
-        setLocale(LOCALE_MAP[currency] || 'en-IN');
+        setLocale(LOCALE_MAP[currency] || 'en-BD');
       }
     } catch (error) {
       console.error('Failed to fetch settings:', error);

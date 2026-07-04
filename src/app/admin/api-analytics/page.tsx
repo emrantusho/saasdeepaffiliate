@@ -91,7 +91,7 @@ export default function ApiAnalyticsPage() {
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState('7d');
-  const [locale, setLocale] = useState('en-IN');
+  const [locale, setLocale] = useState('en-BD');
   const [currencySymbol, setCurrencySymbol] = useState('৳');
 
   const fetchAnalytics = useCallback(async () => {
@@ -115,7 +115,7 @@ export default function ApiAnalyticsPage() {
       if (json.success) {
         const currency = json.settings.currency;
         setCurrencySymbol(CURRENCY_MAP[currency] || '৳');
-        setLocale(LOCALE_MAP[currency] || 'en-IN');
+        setLocale(LOCALE_MAP[currency] || 'en-BD');
       }
     } catch (error) {
       console.error('Failed to fetch settings:', error);

@@ -121,6 +121,8 @@ export default function PartnerDetailPage() {
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [editingPayout, setEditingPayout] = useState<Payout | null>(null);
   const [newStatus, setNewStatus] = useState<'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED'>('PENDING');
+  const [currencySymbol, setCurrencySymbol] = useState('৳');
+  const [locale, setLocale] = useState('en-BD');
 
   useEffect(() => {
     if (!authLoading && (!user || user.role !== 'ADMIN')) {
@@ -134,6 +136,18 @@ export default function PartnerDetailPage() {
       fetchPayouts();
     }
   }, [authLoading, user, partnerId]);
+
+  useEffect(() => {
+    fetch('/api/admin/settings').then(r=>r.json()).then(d => {
+      if (d.success) {
+        const c = d.settings.currency;
+        const SYM: Record<string, string> = { BDT: '৳', USD: '$', INR: '₹', EUR: '€', GBP: '£' };
+        const LOC: Record<string, string> = { BDT: 'en-BD', USD: 'en-US', INR: 'en-IN', EUR: 'en-DE', GBP: 'en-GB' };
+        setCurrencySymbol(SYM[c] || '৳');
+        setLocale(LOC[c] || 'en-BD');
+      }
+    }).catch(() => {});
+  }, []);
 
   const fetchPartnerData = async () => {
     try {
@@ -289,10 +303,10 @@ export default function PartnerDetailPage() {
   };
 
   const formatCurrency = (cents: number) =>
-    `\u20B9${(cents / 100).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    `${currencySymbol}${(cents / 100).toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
   const formatDate = (date: string) =>
-    new Date(date).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' });
+    new Date(date).toLocaleDateString(locale, { year: 'numeric', month: 'short', day: 'numeric' });
 
   const pendingCommissions = commissions.filter((c) => c.status === 'PENDING');
   const pendingAmount = pendingCommissions.reduce((sum, c) => sum + c.amountCents, 0);

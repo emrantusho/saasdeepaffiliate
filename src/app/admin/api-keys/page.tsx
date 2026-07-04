@@ -89,7 +89,7 @@ export default function ApiKeysPage() {
     scopes: ['read'] as string[],
   });
 
-  const [locale, setLocale] = useState('en-IN');
+  const [locale, setLocale] = useState('en-BD');
   const [currencySymbol, setCurrencySymbol] = useState('৳');
 
   const fetchKeys = useCallback(async () => {
@@ -111,7 +111,7 @@ export default function ApiKeysPage() {
       if (json.success) {
         const currency = json.settings.currency;
         setCurrencySymbol(CURRENCY_MAP[currency] || '৳');
-        setLocale(LOCALE_MAP[currency] || 'en-IN');
+        setLocale(LOCALE_MAP[currency] || 'en-BD');
       }
     } catch (error) {
       console.error('Failed to fetch settings:', error);

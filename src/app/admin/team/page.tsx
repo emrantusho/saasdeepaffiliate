@@ -52,7 +52,7 @@ export default function TeamPage() {
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ email: '', name: '', role: 'MANAGER' });
 
-  const [locale, setLocale] = useState('en-IN');
+  const [locale, setLocale] = useState('en-BD');
   const [currencySymbol, setCurrencySymbol] = useState('৳');
 
   const fetchSettings = async () => {
@@ -62,7 +62,7 @@ export default function TeamPage() {
       if (json.success) {
         const currency = json.settings.currency;
         setCurrencySymbol(CURRENCY_MAP[currency] || '৳');
-        setLocale(LOCALE_MAP[currency] || 'en-IN');
+        setLocale(LOCALE_MAP[currency] || 'en-BD');
       }
     } catch (error) {
       console.error('Failed to fetch settings:', error);
