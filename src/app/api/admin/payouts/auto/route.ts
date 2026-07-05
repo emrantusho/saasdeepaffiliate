@@ -14,9 +14,15 @@ async function verifyAdmin(request: NextRequest) {
 
 // POST - Process auto-payouts for all eligible affiliates
 export async function POST(request: NextRequest) {
-  const admin = await verifyAdmin(request);
-  if (!admin) {
-    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 403 });
+  let admin = null;
+  const cronSecret = request.headers.get('x-cron-secret');
+  if (cronSecret && cronSecret === process.env.CRON_SECRET) {
+    // Authorized via cron secret
+  } else {
+    admin = await verifyAdmin(request);
+    if (!admin) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 403 });
+    }
   }
 
   try {
@@ -87,7 +93,7 @@ export async function POST(request: NextRequest) {
             status: 'PENDING',
             method: 'AUTO',
             notes: 'Auto-payout processed',
-            createdBy: admin.id,
+            createdBy: admin?.id || 'system-cron',
           },
         });
 
@@ -103,7 +109,7 @@ export async function POST(request: NextRequest) {
         await prisma.auditLog.create({
           data: {
             action: 'AUTO_PAYOUT_CREATED',
-            actorId: admin.id,
+            actorId: admin?.id || 'system-cron',
             objectType: 'payout',
             objectId: payout.id,
             payload: {
