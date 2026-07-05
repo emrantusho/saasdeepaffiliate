@@ -24,7 +24,6 @@ import {
 } from '@/components/ui/tooltip';
 import {
   TrendingUp,
-  IndianRupee,
   Users,
   Target,
   Clock,
@@ -76,6 +75,8 @@ export default function AdminDashboardPage() {
   const [recentCustomers, setRecentCustomers] = useState<RecentCustomer[]>([]);
   const [loading, setLoading] = useState(true);
   const [currencySymbol, setCurrencySymbol] = useState('৳');
+
+  const CurrencyIcon = () => <span className="text-base font-bold text-blue-600">{currencySymbol}</span>;
 
   useEffect(() => {
     fetch('/api/admin/settings').then(r=>r.json()).then(d => {
@@ -152,7 +153,7 @@ export default function AdminDashboardPage() {
     {
       title: 'Estimated Revenue',
       value: `${currencySymbol}${stats ? (stats.totalEstimatedRevenue / 100).toFixed(2) : '0.00'}`,
-      icon: IndianRupee,
+      icon: CurrencyIcon,
       description: 'Total projected value',
       trend: '+12%',
       trendUp: true,
