@@ -250,6 +250,8 @@ export default function ProgramSettingsPage() {
     );
   }
 
+  const currencySym = settings?.currency === 'BDT' ? '৳' : settings?.currency === 'USD' ? '$' : settings?.currency === 'INR' ? '₹' : settings?.currency === 'EUR' ? '€' : settings?.currency === 'GBP' ? '£' : '৳';
+
   if (!settings) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -655,7 +657,7 @@ export default function ProgramSettingsPage() {
                       <Badge variant="outline">{rule.type}</Badge>
                     </TableCell>
                     <TableCell>
-                      {rule.type === 'PERCENTAGE' ? `${rule.value}%` : `₹${rule.value}`}
+                      {rule.type === 'PERCENTAGE' ? `${rule.value}%` : `${currencySym}${rule.value}`}
                     </TableCell>
                     <TableCell>
                       {rule.isDefault && <Badge variant="default">Default</Badge>}

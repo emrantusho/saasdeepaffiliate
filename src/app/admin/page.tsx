@@ -75,6 +75,17 @@ export default function AdminDashboardPage() {
   const [topAffiliates, setTopAffiliates] = useState<TopAffiliate[]>([]);
   const [recentCustomers, setRecentCustomers] = useState<RecentCustomer[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currencySymbol, setCurrencySymbol] = useState('৳');
+
+  useEffect(() => {
+    fetch('/api/admin/settings').then(r=>r.json()).then(d => {
+      if (d.success) {
+        const c = d.settings.currency;
+        const MAP: Record<string, string> = { BDT: '৳', USD: '$', INR: '₹', EUR: '€', GBP: '£' };
+        setCurrencySymbol(MAP[c] || '৳');
+      }
+    }).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (user && user.role === 'ADMIN') {
@@ -140,7 +151,7 @@ export default function AdminDashboardPage() {
   const statCards = [
     {
       title: 'Estimated Revenue',
-      value: `৳${stats ? (stats.totalEstimatedRevenue / 100).toFixed(2) : '0.00'}`,
+      value: `${currencySymbol}${stats ? (stats.totalEstimatedRevenue / 100).toFixed(2) : '0.00'}`,
       icon: IndianRupee,
       description: 'Total projected value',
       trend: '+12%',
@@ -150,7 +161,7 @@ export default function AdminDashboardPage() {
     },
     {
       title: 'Confirmed Revenue',
-      value: `৳${stats ? (stats.totalRevenue / 100).toFixed(2) : '0.00'}`,
+      value: `${currencySymbol}${stats ? (stats.totalRevenue / 100).toFixed(2) : '0.00'}`,
       icon: TrendingUp,
       description: 'Approved transactions',
       color: 'text-emerald-600',
@@ -158,7 +169,7 @@ export default function AdminDashboardPage() {
     },
     {
       title: 'Commission Owed',
-      value: `৳${stats ? (stats.totalEstimatedCommission / 100).toFixed(2) : '0.00'}`,
+      value: `${currencySymbol}${stats ? (stats.totalEstimatedCommission / 100).toFixed(2) : '0.00'}`,
       icon: Wallet,
       description: 'Pending payouts',
       color: 'text-amber-600',
@@ -376,7 +387,7 @@ export default function AdminDashboardPage() {
                         <p className="text-xs text-muted-foreground font-mono">{affiliate.referralCode}</p>
                       </div>
                       <div className="text-right shrink-0">
-                        <p className="text-sm font-semibold">৳{(affiliate.totalRevenue / 100).toFixed(2)}</p>
+                        <p className="text-sm font-semibold">{currencySymbol}{(affiliate.totalRevenue / 100).toFixed(2)}</p>
                         <p className="text-[11px] text-muted-foreground">{affiliate.totalReferrals} referrals</p>
                       </div>
                     </div>
